@@ -1,12 +1,32 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JInternalFrame.java to edit this template
+ * The MIT License
+ *
+ * Copyright 2024 Pedro.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 package br.com.infox.telas;
 
 /**
  *
- * @author LENOVO
+ * @author Pedro Módolo
+ * @version 1.1
  */
 import java.sql.*;
 import br.com.infox.dal.ModuloConexao;
@@ -99,7 +119,7 @@ public class TelaUsuario extends javax.swing.JInternalFrame {
             pst.setString(4, txtUsuSenha.getText());
             pst.setString(5, cboUsuPerfil.getSelectedItem().toString());
             pst.setString(6, txtUsuId.getText());
-            
+
             if ((txtUsuNome.getText().isEmpty()) || (txtUsuNome.getText().isEmpty()) || (txtUsuLogin.getText().isEmpty()) || (txtUsuSenha.getText().isEmpty()) || (cboUsuPerfil.getSelectedItem().toString().isEmpty())) {
                 JOptionPane.showMessageDialog(null, "Preencha todos os campos obrigatórios!");
 
@@ -125,15 +145,15 @@ public class TelaUsuario extends javax.swing.JInternalFrame {
 
     }
 
-    private void remover(){
-        int confirma = JOptionPane.showConfirmDialog(null, "Tem certeza que deseja remover este usuário?", "Atenção" ,JOptionPane.YES_NO_OPTION);
-        if (confirma == JOptionPane.YES_OPTION){
+    private void remover() {
+        int confirma = JOptionPane.showConfirmDialog(null, "Tem certeza que deseja remover este usuário?", "Atenção", JOptionPane.YES_NO_OPTION);
+        if (confirma == JOptionPane.YES_OPTION) {
             String sql = "delete from tbusuarios where iduser = ?";
             try {
                 pst = conexao.prepareStatement(sql);
                 pst.setString(1, txtUsuId.getText());
                 int apagado = pst.executeUpdate();
-                if (apagado > 0){
+                if (apagado > 0) {
                     JOptionPane.showMessageDialog(null, "Usuário removido com sucesso!");
                     txtUsuId.setText(null);
                     txtUsuNome.setText(null);
@@ -142,13 +162,13 @@ public class TelaUsuario extends javax.swing.JInternalFrame {
                     txtUsuSenha.setText(null);
                 }
             } catch (Exception e) {
-                
+
                 JOptionPane.showMessageDialog(null, e);
-                
+
             }
         }
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

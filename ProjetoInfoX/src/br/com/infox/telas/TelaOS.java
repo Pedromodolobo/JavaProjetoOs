@@ -1,17 +1,42 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JInternalFrame.java to edit this template
+ * The MIT License
+ *
+ * Copyright 2024 Pedro.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 package br.com.infox.telas;
 
 import java.sql.*;
 import br.com.infox.dal.ModuloConexao;
+import java.util.HashMap;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 import net.proteanit.sql.DbUtils;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.view.JasperViewer;
 
 /**
  *
- * @author Pedro
+ * @author Pedro Módolo
+ * @version 1.1
  */
 public class TelaOS extends javax.swing.JInternalFrame {
 
@@ -62,18 +87,16 @@ public class TelaOS extends javax.swing.JInternalFrame {
             pst.setString(7, txtOsValor.getText().replace(",", "."));
             pst.setString(8, txtCliId.getText());
             //Validação dos campos obrigatorios
-            if ((txtCliId.getText().isEmpty()) || (txtOsEquip.getText().isEmpty()) || (txtOsDef.getText().isEmpty())) {
+            if ((txtCliId.getText().isEmpty()) || (txtOsEquip.getText().isEmpty()) || (txtOsDef.getText().isEmpty()) || (cboOsSit.getSelectedItem().equals(" "))) {
                 JOptionPane.showMessageDialog(null, "Preencha todos os campos obrigatórios!");
             } else {
                 int adicionado = pst.executeUpdate();
                 if (adicionado > 0) {
                     JOptionPane.showMessageDialog(null, "OS emitida com sucesso!");
-                    txtCliId.setText(null);
-                    txtOsEquip.setText(null);
-                    txtOsDef.setText(null);
-                    txtOsServ.setText(null);
-                    txtOsTec.setText(null);
-                    txtOsValor.setText(null);
+                    recuperarOs();
+                    btnOsAdicionar.setEnabled(false);
+                    btnOsPesquisar.setEnabled(false);
+                    btnOsImprimir.setEnabled(true);
                 }
             }
         } catch (Exception e) {
@@ -85,7 +108,7 @@ public class TelaOS extends javax.swing.JInternalFrame {
     private void pesquisar_os() {
         //A linha abaixo cria uma caixa de entrada do tipo JOption Pane
         String num_os = JOptionPane.showInputDialog("Número da OS");
-        String sql = "select * from tbos where os = " + num_os;
+        String sql = "select os, date_format(data_os,'%d/%m/%Y - %H:%i'), tipo, situacao, equipamento, defeito, servico, tecnico, valor, idcli from tbos where os =" + num_os;
         try {
             pst = conexao.prepareStatement(sql);
             rs = pst.executeQuery();
@@ -111,8 +134,13 @@ public class TelaOS extends javax.swing.JInternalFrame {
 
                 //Evitando problemas
                 btnOsAdicionar.setEnabled(false);
+                btnOsPesquisar.setEnabled(false);
                 txtCliPesquisar.setEnabled(false);
                 tblClientes.setVisible(false);
+                //Ativar demais botões
+                btnOsAlterar.setEnabled(true);
+                btnOsExcluir.setEnabled(true);
+                btnOsImprimir.setEnabled(true);
 
             } else {
                 JOptionPane.showMessageDialog(null, "OS não cadastrada!");
@@ -139,24 +167,13 @@ public class TelaOS extends javax.swing.JInternalFrame {
             pst.setString(7, txtOsValor.getText().replace(",", "."));
             pst.setString(8, txtOs.getText());
             //Validação dos campos obrigatorios
-            if ((txtCliId.getText().isEmpty()) || (txtOsEquip.getText().isEmpty()) || (txtOsDef.getText().isEmpty())) {
+            if ((txtCliId.getText().isEmpty()) || (txtOsEquip.getText().isEmpty()) || (txtOsDef.getText().isEmpty()) || (cboOsSit.getSelectedItem().equals(" "))) {
                 JOptionPane.showMessageDialog(null, "Preencha todos os campos obrigatórios!");
             } else {
                 int adicionado = pst.executeUpdate();
                 if (adicionado > 0) {
                     JOptionPane.showMessageDialog(null, "OS alterada com sucesso!");
-                    txtOs.setText(null);
-                    txtData.setText(null);
-                    txtCliId.setText(null);
-                    txtOsEquip.setText(null);
-                    txtOsDef.setText(null);
-                    txtOsServ.setText(null);
-                    txtOsTec.setText(null);
-                    txtOsValor.setText(null);
-                    //habilitar os objetos
-                    btnOsAdicionar.setEnabled(true);
-                    txtCliPesquisar.setEditable(true);
-                    tblClientes.setVisible(true);
+                    limpar();
                 }
             }
         } catch (Exception e) {
@@ -176,23 +193,72 @@ public class TelaOS extends javax.swing.JInternalFrame {
                 if (apagado > 0) {
                     JOptionPane.showMessageDialog(null, "OS excluida com sucesso!");
 
-                    txtOs.setText(null);
-                    txtData.setText(null);
-                    txtCliId.setText(null);
-                    txtOsEquip.setText(null);
-                    txtOsDef.setText(null);
-                    txtOsServ.setText(null);
-                    txtOsTec.setText(null);
-                    txtOsValor.setText(null);
-                    //habilitar os objetos
-                    btnOsAdicionar.setEnabled(true);
-                    txtCliPesquisar.setEditable(true);
-                    tblClientes.setVisible(true);
+                    limpar();
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, e);
             }
         } else {
+        }
+    }
+
+    //Limpar campos e gerenciar os botoes
+    private void limpar() {
+        txtOs.setText(null);
+        txtData.setText(null);
+        txtCliPesquisar.setText(null);
+        ((DefaultTableModel) tblClientes.getModel()).setRowCount(0);
+        cboOsSit.setSelectedItem(" ");
+        txtCliId.setText(null);
+        txtOsEquip.setText(null);
+        txtOsDef.setText(null);
+        txtOsServ.setText(null);
+        txtOsTec.setText(null);
+        txtOsValor.setText(null);
+        //habilitar os objetos
+        btnOsAdicionar.setEnabled(true);
+        btnOsPesquisar.setEnabled(true);
+        txtCliPesquisar.setEnabled(true);
+        tblClientes.setVisible(true);
+        //desabilitar os botões
+        btnOsAlterar.setEnabled(false);
+        btnOsExcluir.setEnabled(false);
+        btnOsImprimir.setEnabled(false);
+    }
+
+    //Método para imprimir uma os
+    private void imprimir_os() {
+        //Imprimindo uma OS
+        int confirma = JOptionPane.showConfirmDialog(null, "Confirma a impressão desta OS?", "Atenção", JOptionPane.YES_NO_OPTION);
+        if (confirma == JOptionPane.YES_OPTION) {
+            //Imprimindo relatório com o framework JasperReports
+            try {
+                //Usando a clase HashMap para criar um filtro
+                HashMap filtro = new HashMap();
+                filtro.put("os", Integer.parseInt(txtOs.getText()));
+                //Usando a classe JasperPrint para preparar a impressão de um relatório
+                JasperPrint print = JasperFillManager.fillReport(getClass().getResourceAsStream("reports/os.jasper"), filtro, conexao);
+
+                //A linha abaixo exibe o relatorio através da classe JasperViwer
+                JasperViewer.viewReport(print, false);
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e);
+            }
+        }
+    }
+
+    //Recuperar OS
+    private void recuperarOs() {
+        String sql = "select max(os) from tbos";
+        try {
+            pst = conexao.prepareStatement(sql);
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                txtOs.setText(rs.getString(1));
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e);
         }
     }
 
@@ -334,9 +400,9 @@ public class TelaOS extends javax.swing.JInternalFrame {
                 .addContainerGap(12, Short.MAX_VALUE))
         );
 
-        jLabel3.setText("Situação:");
+        jLabel3.setText("*Situação:");
 
-        cboOsSit.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Na Bancada", "Entrega OK", "Orçamento REPROVADO", "Aguardando Aprovação", "Aguardando Peças", "Abandonado pelo Cliente", "Retornou" }));
+        cboOsSit.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " ", "Na Bancada", "Entrega OK", "Orçamento REPROVADO", "Aguardando Aprovação", "Aguardando Peças", "Abandonado pelo Cliente", "Retornou" }));
         cboOsSit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cboOsSitActionPerformed(evt);
@@ -402,7 +468,7 @@ public class TelaOS extends javax.swing.JInternalFrame {
                         .addComponent(txtCliPesquisar, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(5, 5, 5)
                         .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 15, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtCliId, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -462,6 +528,7 @@ public class TelaOS extends javax.swing.JInternalFrame {
 
         btnOsAlterar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/br/com/infox/icones/update.png"))); // NOI18N
         btnOsAlterar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnOsAlterar.setEnabled(false);
         btnOsAlterar.setPreferredSize(new java.awt.Dimension(80, 80));
         btnOsAlterar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -471,6 +538,7 @@ public class TelaOS extends javax.swing.JInternalFrame {
 
         btnOsExcluir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/br/com/infox/icones/delete.png"))); // NOI18N
         btnOsExcluir.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnOsExcluir.setEnabled(false);
         btnOsExcluir.setPreferredSize(new java.awt.Dimension(80, 80));
         btnOsExcluir.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -480,7 +548,13 @@ public class TelaOS extends javax.swing.JInternalFrame {
 
         btnOsImprimir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/br/com/infox/icones/print.png"))); // NOI18N
         btnOsImprimir.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnOsImprimir.setEnabled(false);
         btnOsImprimir.setPreferredSize(new java.awt.Dimension(80, 80));
+        btnOsImprimir.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnOsImprimirActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -501,10 +575,10 @@ public class TelaOS extends javax.swing.JInternalFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(32, 32, 32)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel7)
                             .addComponent(jLabel6)
-                            .addComponent(jLabel8)
-                            .addComponent(jLabel9))
+                            .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel9, javax.swing.GroupLayout.Alignment.TRAILING))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(txtOsEquip)
@@ -564,9 +638,9 @@ public class TelaOS extends javax.swing.JInternalFrame {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(btnOsAlterar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(btnOsPesquisar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(btnOsAdicionar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(btnOsPesquisar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnOsAdicionar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(btnOsExcluir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnOsImprimir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(19, Short.MAX_VALUE))
@@ -644,6 +718,11 @@ public class TelaOS extends javax.swing.JInternalFrame {
         //Chamando o Método excluir os
         excluir_os();
     }//GEN-LAST:event_btnOsExcluirActionPerformed
+
+    private void btnOsImprimirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOsImprimirActionPerformed
+        //Chamando método imprimir os
+        imprimir_os();
+    }//GEN-LAST:event_btnOsImprimirActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
